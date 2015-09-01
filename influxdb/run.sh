@@ -2,7 +2,8 @@
 
 set -m
 
-CONFIG_FILE="/etc/influxdb/config.toml"
+CONFIG_FILE="/etc/opt/influxdb/influxdb.conf"
 
 echo "=> Starting InfluxDB ..."
-exec /usr/bin/influxdb -config=${CONFIG_FILE}
+
+exec service influxdb start

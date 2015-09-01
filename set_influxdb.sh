@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -m
-CONFIG_FILE="/etc/influxdb/config.toml"
+CONFIG_FILE="/etc/opt/influxdb/influxdb.conf"
 
 API_URL="http://localhost:8086"
 
@@ -45,7 +45,7 @@ if [ -f "/.influxdb_configured" ]; then
     echo "=> Database had been created before, skipping ..."
 else
     echo "=> Starting InfluxDB ..."
-    exec /usr/bin/influxdb -config=${CONFIG_FILE} &
+    service influxdb start &
     arr=$(echo ${PRE_CREATE_DB} | tr ";" "\n")
 
     #wait for the startup of influxdb
@@ -61,19 +61,20 @@ else
     for x in $arr
     do
         echo "=> Creating database: ${x}"
-        curl -s -k -X POST -d "{\"name\":\"${x}\"}" $(echo ${API_URL}'/db?u=root&p=root')
+        curl -s -k -G $(echo ${API_URL}'/query') --data-urlencode "q=CREATE DATABASE ${x}"
+        echo ""
     done
     echo ""
     
-    echo "=> Creating User for database: data"
-    curl -s -k -X POST -d "{\"name\":\"${INFLUXDB_DATA_USER}\",\"password\":\"${INFLUXDB_DATA_PW}\"}" $(echo ${API_URL}'/db/data/users?u=root&p=root')
-    echo "=> Creating User for database: grafana"
-    curl -s -k -X POST -d "{\"name\":\"${INFLUXDB_GRAFANA_USER}\",\"password\":\"${INFLUXDB_GRAFANA_PW}\"}" $(echo ${API_URL}'/db/grafana/users?u=root&p=root')
-    echo ""
+    # echo "=> Creating User for database: data"
+    # curl -s -k -X POST -d "{\"name\":\"${INFLUXDB_DATA_USER}\",\"password\":\"${INFLUXDB_DATA_PW}\"}" $(echo ${API_URL}'/db/data/users?u=root&p=root')
+    # echo "=> Creating User for database: grafana"
+    # curl -s -k -X POST -d "{\"name\":\"${INFLUXDB_GRAFANA_USER}\",\"password\":\"${INFLUXDB_GRAFANA_PW}\"}" $(echo ${API_URL}'/db/grafana/users?u=root&p=root')
+    # echo ""
     
-    echo "=> Changing Password for User: root"
-    curl -s -k -X POST -d "{\"password\":\"${ROOT_PW}\"}" $(echo ${API_URL}'/cluster_admins/root?u=root&p=root')
-    echo ""
+    # echo "=> Changing Password for User: root"
+    # curl -s -k -X POST -d "{\"password\":\"${ROOT_PW}\"}" $(echo ${API_URL}'/cluster_admins/root?u=root&p=root')
+    # echo ""
 
     touch "/.influxdb_configured"
     exit 0
